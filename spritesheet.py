@@ -1,3 +1,4 @@
+# Script copied from http://pygame.org/wiki/Spritesheet
 # This class handles sprite sheets
 # This was taken from www.scriptefun.com/transcript-2-using
 # sprite-sheets-and-drawing-the-background

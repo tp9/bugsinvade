@@ -1,3 +1,4 @@
+#script copied from http://pygame.org/wiki/Spritesheet
 import spritesheet
  
 class SpriteStripAnim(object):
