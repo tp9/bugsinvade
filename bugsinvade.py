@@ -21,11 +21,11 @@ BGCOLOR         = (0, 0, 0)
 def main():
     global DISPLAYSURF, FPSCLOCK
     
-    os.environ['SDL_VIDEO_WINDOW_POS'] = "5,25"
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "5,40"
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    pygame.display.set_caption("Bugs Attack!")
+    pygame.display.set_caption("Bugs Invade!")
 
     while True:
         runGame()
@@ -47,6 +47,10 @@ def runGame():
     bug1_y = 0
     ship_x = 0
     bullets = []
+    bugs = []
+    bugs.append({'surface':pygame.transform.scale(bug1.next(), (bug1Width,bug1Height)),
+            'x': bug1_x,
+            'y': bug1_y})
     lastMoveSideways = time.time()
     lastBulletFired = time.time() - BULLETFIREDFREQ
     
@@ -57,8 +61,14 @@ def runGame():
     while True:
         checkForQuit()
         DISPLAYSURF.fill(BGCOLOR)
-        DISPLAYSURF.blit(pygame.transform.scale(ship.images[0], (shipWidth,shipHeight)), (ship_x, WINDOWHEIGHT - (shipHeight + 1)))        
-        DISPLAYSURF.blit(pygame.transform.scale(bug1.next(), (bug1Width,bug1Height)), (bug1_x, bug1_y))
+        DISPLAYSURF.blit(pygame.transform.scale(ship.images[0], (shipWidth,shipHeight)), (ship_x, WINDOWHEIGHT - (shipHeight + 1)))
+        for bug in bugs:
+            bug['rect'] = pygame.Rect((bug['x'],
+                            bug['y'],
+                            bug1Width,
+                            bug1Height))
+            DISPLAYSURF.blit(bug['surface'], bug['rect'])
+            DISPLAYSURF.blit(pygame.transform.scale(bug1.next(), (bug1Width,bug1Height)), (bug['x'], bug['y']))
         DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (75, 550))
         DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (215, 550))
         DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (350, 550))
@@ -77,11 +87,9 @@ def runGame():
                     shipMoveLeft = False
                 # space bar
                 if event.key == K_SPACE and time.time() - lastBulletFired > BULLETFIREDFREQ:
-                    newBullet = {'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
+                    bullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
                             'x': ship_x + 25,
-                            'y': WINDOWHEIGHT - (shipHeight + 1)}                
-                    bullets.append(newBullet)
-                    # bullets.append([ship_x + 25, WINDOWHEIGHT - (shipHeight + 1)])
+                            'y': WINDOWHEIGHT - (shipHeight + 1)})
                     lastBulletFired = time.time()
             # releasing left and right keys
             elif event.type == KEYUP:
@@ -103,26 +111,31 @@ def runGame():
         #move bullets
         if bullets != []:
             for i, bullet in enumerate(bullets[:]):
-                DISPLAYSURF.blit(bullet['surface'], (bullet['x'], bullet['y']))
-                # DISPLAYSURF.blit(pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)), (bullet[0], bullet[1]))        
+                bullet['rect'] = pygame.Rect((bullet['x'],
+                                bullet['y'],
+                                bulletWidth,
+                                bulletHeight))
+                DISPLAYSURF.blit(bullet['surface'], bullet['rect'])
                 bullet['y'] -= MOVERATE
                 if bullet['y'] < 0:
                     bullets.remove(bullet)
-                # elif bulletImg.colliderect(bug1.rect):
-                    # bullets.remove(bullet)
-                    # del bug1
+                else:
+                    for bug in bugs:
+                        if bullet['rect'].colliderect(bug['rect']):
+                            bullets.remove(bullet)
+                            bugs.remove(bug)
                 
         #move bug
         if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ:
-            if bug1_x + BUGMOVEH > WINDOWWIDTH - bug1Width:
-                bugMoveRight = False
-            elif bug1_x - BUGMOVEH < 0:
-                bugMoveRight = True
-            if bugMoveRight:
-                bug1_x += BUGMOVEH
-            else:
-                bug1_x -= BUGMOVEH
-                
+            for bug in bugs:
+                if bug['x'] + BUGMOVEH > WINDOWWIDTH - bug1Width:
+                    bugMoveRight = False
+                elif bug['x'] - BUGMOVEH < 0:
+                    bugMoveRight = True
+                if bugMoveRight:
+                    bug['x'] += BUGMOVEH
+                else:
+                    bug['x'] -= BUGMOVEH
             lastMoveSideways = time.time()
         
         pygame.display.update()
