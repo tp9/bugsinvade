@@ -12,6 +12,7 @@ FPS             = 30
 BUGMOVEH        = 20
 BUGMOVEV        = 20
 BUGSPACE        = 50
+BUGROWHEIGHT    = 50
 BLOCKSPACE      = 140
 FACTOR          = 3
 MOVESIDEWAYSFREQ= .75
@@ -42,14 +43,13 @@ def runGame():
     bullets = []
     # make bugs
     bug1Sprite = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
-    bug1Width = bug1Sprite.getWidth() * FACTOR
-    bug1Height = bug1Sprite.getHeight() * FACTOR
-    bugs = []
-    for i in range(6):
-        bugs.append({'surface': pygame.transform.scale(bug1Sprite.images[0], (bug1Width,bug1Height))})
-        bugs[i]['image'] = 0
-        bugs[i]['x'] = 0 + (i * BUGSPACE)
-        bugs[i]['y'] = 0
+    bugWidth = bug1Sprite.getWidth() * FACTOR
+    bugHeight = bug1Sprite.getHeight() * FACTOR
+    bugsRow1 = makeBugRow(bug1Sprite.images[0], 0, bugWidth, bugHeight)
+    bug2Sprite = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
+    bugsRow2 = makeBugRow(bug1Sprite.images[0], 1, bugWidth, bugHeight)
+    bug3Sprite = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
+    bugsRow3 = makeBugRow(bug1Sprite.images[0], 2, bugWidth, bugHeight)
     # make blocks
     blockSprite = SpriteStripAnim('invader.png', (0,166,33,20), 5, 1)
     blockWidth = blockSprite.getWidth() * 2
@@ -73,11 +73,23 @@ def runGame():
         checkForQuit()
         DISPLAYSURF.fill(BGCOLOR)
         DISPLAYSURF.blit(pygame.transform.scale(ship.images[0], (shipWidth,shipHeight)), (ship_x, WINDOWHEIGHT - (shipHeight + 1)))
-        for bug in bugs:
+        for bug in bugsRow1:
             bug['rect'] = pygame.Rect((bug['x'],
                             bug['y'],
-                            bug1Width,
-                            bug1Height))
+                            bugWidth,
+                            bugHeight))
+            DISPLAYSURF.blit(bug['surface'], bug['rect'])
+        for bug in bugsRow2:
+            bug['rect'] = pygame.Rect((bug['x'],
+                            bug['y'],
+                            bugWidth,
+                            bugHeight))
+            DISPLAYSURF.blit(bug['surface'], bug['rect'])
+        for bug in bugsRow3:
+            bug['rect'] = pygame.Rect((bug['x'],
+                            bug['y'],
+                            bugWidth,
+                            bugHeight))
             DISPLAYSURF.blit(bug['surface'], bug['rect'])
         for block in blocks:
             DISPLAYSURF.blit(block['surface'], block['rect'])
@@ -132,10 +144,10 @@ def runGame():
                     bullets.remove(bullet)
                     print "Test"
                 else:
-                    for bug in bugs[:]:
+                    for bug in bugsRow1[:]:
                         if bullet['rect'].colliderect(bug['rect']):
                             bullets.remove(bullet)
-                            bugs.remove(bug)
+                            bugsRow1.remove(bug)
                             break # break after hitting first bug
                     for block in blocks[:]:
                         if bullet['rect'].colliderect(block['rect']):
@@ -150,13 +162,21 @@ def runGame():
                 
         #move bug
         if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ:
-            if len(bugs) > 0:
+            if len(bugsRow1) > 0:
                 # set bug direction
-                if bugs[len(bugs)-1]['x'] + BUGMOVEH > WINDOWWIDTH - bug1Width:
+                if max(
+                        bugsRow1[len(bugsRow1)-1]['x'],
+                        bugsRow2[len(bugsRow2)-1]['x'],
+                        bugsRow3[len(bugsRow3)-1]['x']
+                        ) + BUGMOVEH > WINDOWWIDTH - bugWidth:
                     bugMoveRight = False
-                elif bugs[0]['x'] - BUGMOVEH < 0:
+                elif min(
+                        bugsRow1[0]['x'],
+                        bugsRow2[0]['x'],
+                        bugsRow3[0]['x']
+                        ) - BUGMOVEH < 0:
                     bugMoveRight = True
-            for bug in bugs:
+            for bug in bugsRow1:
                 if bugMoveRight:
                     bug['x'] += BUGMOVEH
                 else:
@@ -166,13 +186,35 @@ def runGame():
                     bug['image'] = 1
                 else:
                     bug['image'] = 0
-                bug['surface'] = pygame.transform.scale(bug1Sprite.images[bug['image']], (bug1Width,bug1Height))
+                bug['surface'] = pygame.transform.scale(bug1Sprite.images[bug['image']], (bugWidth,bugHeight))
+            for bug in bugsRow2:
+                if bugMoveRight:
+                    bug['x'] += BUGMOVEH
+                else:
+                    bug['x'] -= BUGMOVEH
+                # alternate animation
+                if bug['image'] == 0:
+                    bug['image'] = 1
+                else:
+                    bug['image'] = 0
+                bug['surface'] = pygame.transform.scale(bug1Sprite.images[bug['image']], (bugWidth,bugHeight))
+            for bug in bugsRow3:
+                if bugMoveRight:
+                    bug['x'] += BUGMOVEH
+                else:
+                    bug['x'] -= BUGMOVEH
+                # alternate animation
+                if bug['image'] == 0:
+                    bug['image'] = 1
+                else:
+                    bug['image'] = 0
+                bug['surface'] = pygame.transform.scale(bug1Sprite.images[bug['image']], (bugWidth,bugHeight))
             lastMoveSideways = time.time()
         
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
-def makeBugRow(bugSprite, row):
+def makeBugRow(bugSprite, row, bugWidth, bugHeight):
     bugs = []
     for i in range(6):
         bugs.append({'surface': pygame.transform.scale(bugSprite, (bugWidth,bugHeight)),
