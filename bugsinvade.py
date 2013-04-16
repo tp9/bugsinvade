@@ -11,7 +11,7 @@ WINDOWHEIGHT    = 640
 FPS             = 30
 BUGMOVEH        = 20
 BUGMOVEV        = 20
-BUGWIDTH        = 62
+BLOCKSPACE      = 140
 FACTOR          = 4
 MOVESIDEWAYSFREQ= .75
 BULLETFIREDFREQ = .50
@@ -20,7 +20,7 @@ BGCOLOR         = (0, 0, 0)
 
 def main():
     global DISPLAYSURF, FPSCLOCK
-    
+    # set initial position of the game window
     os.environ['SDL_VIDEO_WINDOW_POS'] = "5,40"
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -37,9 +37,9 @@ def runGame():
     bug1 = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
     bug1Width = bug1.getWidth() * FACTOR
     bug1Height = bug1.getHeight() * FACTOR
-    block = SpriteStripAnim('invader.png', (0,166,32,20), 5, 1)
-    blockWidth = block.getWidth() * 2
-    blockHeight = block.getHeight() * 2
+    blockSprite = SpriteStripAnim('invader.png', (0,166,33,20), 5, 1)
+    blockWidth = blockSprite.getWidth() * 2
+    blockHeight = blockSprite.getHeight() * 2
     bulletImg = SpriteStripAnim('invader.png', (89, 188, 10, 10), 1, 1)
     bulletWidth = bulletImg.getWidth() * 2
     bulletHeight = bulletImg.getHeight() * 2
@@ -47,10 +47,21 @@ def runGame():
     bug1_y = 0
     ship_x = 0
     bullets = []
+    # make bugs
     bugs = []
-    bugs.append({'surface':pygame.transform.scale(bug1.next(), (bug1Width,bug1Height)),
-            'x': bug1_x,
-            'y': bug1_y})
+    bugs.append({'surface': pygame.transform.scale(bug1.images[0], (bug1Width,bug1Height)),
+                 'image': 0,
+                 'x': bug1_x,
+                 'y': bug1_y})
+    # make blocks
+    blocks = []
+    for i in range(3):
+        blocks.append({'surface':pygame.transform.scale(blockSprite.images[0], (blockWidth, blockHeight)),
+                       'rect':pygame.Rect((75 + (i * BLOCKSPACE), 550, blockWidth, blockHeight)),
+                       'image':0,
+                       'x':75 + (i * BLOCKSPACE),
+                       'y':550})
+    # set initial timers
     lastMoveSideways = time.time()
     lastBulletFired = time.time() - BULLETFIREDFREQ
     
@@ -68,10 +79,11 @@ def runGame():
                             bug1Width,
                             bug1Height))
             DISPLAYSURF.blit(bug['surface'], bug['rect'])
-            DISPLAYSURF.blit(pygame.transform.scale(bug1.next(), (bug1Width,bug1Height)), (bug['x'], bug['y']))
-        DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (75, 550))
-        DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (215, 550))
-        DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (350, 550))
+        for block in blocks:
+            DISPLAYSURF.blit(block['surface'], block['rect'])
+        # DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (75, 550))
+        # DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (215, 550))
+        # DISPLAYSURF.blit(pygame.transform.scale(block.images[0], (blockWidth, blockHeight)), (350, 550))
         pygame.display.flip()
         
         #event handler
@@ -124,6 +136,14 @@ def runGame():
                         if bullet['rect'].colliderect(bug['rect']):
                             bullets.remove(bullet)
                             bugs.remove(bug)
+                    for block in blocks:
+                        if bullet['rect'].colliderect(block['rect']):
+                            bullets.remove(bullet)
+                            if block['image'] < 4:
+                                block['image'] += 1
+                                block['surface'] = pygame.transform.scale(blockSprite.images[block['image']], (blockWidth,blockHeight))
+                            elif block['image'] == 4:
+                                blocks.remove(block)
                 
         #move bug
         if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ:
@@ -136,6 +156,11 @@ def runGame():
                     bug['x'] += BUGMOVEH
                 else:
                     bug['x'] -= BUGMOVEH
+                if bug['image'] == 0:
+                    bug['image'] = 1
+                else:
+                    bug['image'] = 0
+                bug['surface'] = pygame.transform.scale(bug1.images[bug['image']], (bug1Width,bug1Height))
             lastMoveSideways = time.time()
         
         pygame.display.update()
@@ -145,7 +170,7 @@ def checkForQuit():
     for event in pygame.event.get(QUIT):
         pygame.quit()
         sys.exit()
-
+    
 
 if __name__ == "__main__": #This calls the game loop
     main()
