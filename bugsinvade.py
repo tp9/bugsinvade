@@ -46,10 +46,7 @@ def runGame():
     bug1Height = bug1Sprite.getHeight() * FACTOR
     bugs = []
     for i in range(6):
-        if i % 2 == 0:
-            bugs.append({'surface': pygame.transform.scale(bug1Sprite.images[0], (bug1Width,bug1Height))})
-        else:
-            bugs.append({'surface': pygame.transform.scale(bug1Sprite.images[0], (bug1Width,bug1Height))})
+        bugs.append({'surface': pygame.transform.scale(bug1Sprite.images[0], (bug1Width,bug1Height))})
         bugs[i]['image'] = 0
         bugs[i]['x'] = 0 + (i * BUGSPACE)
         bugs[i]['y'] = 0
@@ -99,11 +96,10 @@ def runGame():
                     shipMoveRight = True
                     shipMoveLeft = False
                 # space bar
-                if event.key == K_SPACE and time.time() - lastBulletFired > BULLETFIREDFREQ:
+                if event.key == K_SPACE and bullets == []:
                     bullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
                             'x': ship_x + 25,
                             'y': WINDOWHEIGHT - (shipHeight + 1)})
-                    lastBulletFired = time.time()
             # releasing left and right keys
             elif event.type == KEYUP:
                 if event.key == K_LEFT:
@@ -122,6 +118,8 @@ def runGame():
             ship_x += MOVERATE
             
         #move bullets
+        # assert(1==2)
+        #removed cloning to test bug
         if bullets != []:
             for bullet in bullets[:]:
                 bullet['rect'] = pygame.Rect((bullet['x'],
@@ -129,14 +127,16 @@ def runGame():
                                 bulletWidth,
                                 bulletHeight))
                 DISPLAYSURF.blit(bullet['surface'], bullet['rect'])
-                bullet['y'] -= MOVERATE
+                # bullet['y'] -= MOVERATE
                 if bullet['y'] < 0:
                     bullets.remove(bullet)
+                    print "Test"
                 else:
                     for bug in bugs[:]:
                         if bullet['rect'].colliderect(bug['rect']):
                             bullets.remove(bullet)
                             bugs.remove(bug)
+                            break # break after hitting first bug
                     for block in blocks[:]:
                         if bullet['rect'].colliderect(block['rect']):
                             bullets.remove(bullet)
@@ -145,6 +145,8 @@ def runGame():
                                 block['surface'] = pygame.transform.scale(blockSprite.images[block['image']], (blockWidth,blockHeight))
                             elif block['image'] == 4:
                                 blocks.remove(block)
+                    if bullets != []:
+                        bullet['y'] -= MOVERATE
                 
         #move bug
         if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ:
@@ -169,6 +171,16 @@ def runGame():
         
         pygame.display.update()
         FPSCLOCK.tick(FPS)
+
+def makeBugRow(bugSprite, row):
+    bugs = []
+    for i in range(6):
+        bugs.append({'surface': pygame.transform.scale(bugSprite, (bugWidth,bugHeight)),
+                    'image': 0,
+                    'x': 0 + (i * BUGSPACE),
+                    'y': row * BUGROWHEIGHT
+        })
+    return bugs
         
 def checkForQuit():
     for event in pygame.event.get(QUIT):
