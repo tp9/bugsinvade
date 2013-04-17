@@ -38,17 +38,17 @@ def main():
 
         
 def runGame():
-    ship = SpriteStripAnim('invader.png', (204,154,18,10), 1, 1)
+    ship = SpriteStripAnim('img\invader.png', (204,154,18,10), 1, 1)
     shipWidth = ship.getWidth() * FACTOR
     shipHeight = ship.getHeight() * FACTOR
-    bulletImg = SpriteStripAnim('invader.png', (89, 188, 10, 10), 1, 1)
+    bulletImg = SpriteStripAnim('img\invader.png', (89, 188, 10, 10), 1, 1)
     bulletWidth = bulletImg.getWidth()
     bulletHeight = bulletImg.getHeight()
     ship_x = 0
     bullets = []
     
     # make bugs
-    bugSprite = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
+    bugSprite = SpriteStripAnim('img\invader.png', (0, 144, 18, 10), 2, 1, True, 23)
     bugWidth = bugSprite.getWidth() * FACTOR
     bugHeight = bugSprite.getHeight() * FACTOR
     bugs = []
@@ -62,7 +62,7 @@ def runGame():
             })
             
     # make blocks
-    blockSprite = SpriteStripAnim('invader.png', (0,166,33,20), 5, 1)
+    blockSprite = SpriteStripAnim('img\invader.png', (0,166,33,20), 5, 1)
     blockWidth = blockSprite.getWidth() * FACTOR
     blockHeight = blockSprite.getHeight() * FACTOR
     blocks = []
