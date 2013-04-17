@@ -41,6 +41,7 @@ def runGame():
     bulletHeight = bulletImg.getHeight()
     ship_x = 0
     bullets = []
+    
     # make bugs
     bugSprite = SpriteStripAnim('invader.png', (0, 144, 18, 10), 2, 1, True, 23)
     bugWidth = bugSprite.getWidth() * FACTOR
@@ -54,6 +55,7 @@ def runGame():
                         'x': 0 + (bug * BUGSPACE),
                         'y': bugRow * BUGROWHEIGHT
             })
+            
     # make blocks
     blockSprite = SpriteStripAnim('invader.png', (0,166,33,20), 5, 1)
     blockWidth = blockSprite.getWidth() * FACTOR
@@ -63,9 +65,9 @@ def runGame():
         blocks.append({'surface':pygame.transform.scale(blockSprite.images[0], (blockWidth, blockHeight)),
                        'rect':pygame.Rect((75 + (i * BLOCKSPACE), WINDOWHEIGHT - 100, blockWidth, blockHeight)),
                        'image':0})
-    # set initial timers
-    lastMoveSideways = time.time()
-    
+                       
+    # set initial timers and movement directions
+    lastMoveSideways = time.time()    
     bugMoveRight = True
     shipMoveLeft = False
     shipMoveRight = False
@@ -86,9 +88,9 @@ def runGame():
             
         pygame.display.flip()
         
-        #event handler
+        # event handler
         for event in pygame.event.get():
-            #keyboard handler
+            # keyboard handler
             if event.type == KEYDOWN:
                 # left and right keys
                 if (event.key == K_LEFT) and (ship_x > 0):
@@ -100,7 +102,7 @@ def runGame():
                 # space bar
                 if event.key == K_SPACE and bullets == []:
                     bullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
-                            'x': ship_x + 25,
+                            'x': ship_x + 22,
                             'y': WINDOWHEIGHT - (shipHeight + 1)})
             # releasing left and right keys
             elif event.type == KEYUP:
@@ -109,7 +111,7 @@ def runGame():
                 elif event.key == K_RIGHT:
                     shipMoveRight = False
 
-        #move ship
+        # move ship
         if ship_x <= 0:
             shipMoveLeft = False
         elif ship_x >= (WINDOWWIDTH - shipWidth):
@@ -119,7 +121,7 @@ def runGame():
         elif shipMoveRight:
             ship_x += MOVERATE
             
-        #move bullets
+        # move bullets
         if bullets != []:
             for bullet in bullets[:]:
                 bullet['rect'] = pygame.Rect((bullet['x'],
@@ -129,7 +131,7 @@ def runGame():
                 DISPLAYSURF.blit(bullet['surface'], bullet['rect'])
                 if bullet['y'] < 0:
                     bullets.remove(bullet)
-                else:
+                else: # collision detection
                     bugHit = False
                     for bugsRow in range(len(bugs)-1, -1, -1):
                         if bugHit:
@@ -154,7 +156,7 @@ def runGame():
                     if bullets != []:
                         bullet['y'] -= BULLETSPEED
                 
-        #move bugs
+        # move bugs
         if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ and bugs != []:
             if len(bugs[0]) > 0 or len(bugs[1]) > 0 or len(bugs[2]) > 0:
                 # set bug direction
@@ -191,5 +193,5 @@ def checkForQuit():
         sys.exit()
     
 
-if __name__ == "__main__": #This calls the game loop
+if __name__ == "__main__":
     main()
