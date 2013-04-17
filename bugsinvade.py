@@ -14,11 +14,11 @@ BUGMOVEV        = 20
 BUGSPACE        = 80
 BUGROWHEIGHT    = 50
 BUGBOUNDARY     = WINDOWHEIGHT - 100
-BUGFIRECHANCE   = .04
+BUGFIRECHANCE   = .07
 BLOCKSPACE      = 200
 FACTOR          = 3
 MOVERATE        = 9
-BULLETSPEED     = 9
+BULLETSPEED     = 15
 BGCOLOR         = (0, 0, 0)
 TEXTSHADOWCOLOR = (185,185,185)
 TEXTCOLOR       = (255,255,255)
@@ -39,13 +39,19 @@ def main():
 
         
 def runGame():
-    ship = SpriteStripAnim('img\invader.png', (204,154,18,10), 1, 1)
-    shipWidth = ship.getWidth() * FACTOR
-    shipHeight = ship.getHeight() * FACTOR
-    bulletImg = SpriteStripAnim('img\invader.png', (89, 188, 10, 10), 1, 1)
-    bulletWidth = bulletImg.getWidth()
-    bulletHeight = bulletImg.getHeight()
+    shipSprite = SpriteStripAnim('img\invader.png', (204,154,18,10), 1, 1)
+    shipWidth = shipSprite.getWidth() * FACTOR
+    shipHeight = shipSprite.getHeight() * FACTOR
+    ships = []
     ship_x = 0
+    for i in range(3):
+        ships.append({'surface': pygame.transform.scale(shipSprite.images[0], (shipWidth,shipHeight)),
+                'x': ship_x, 
+                'y': WINDOWHEIGHT - (shipHeight + 1)
+        })
+    bulletSprite = SpriteStripAnim('img\invader.png', (89, 188, 10, 10), 1, 1)
+    bulletWidth = bulletSprite.getWidth()
+    bulletHeight = bulletSprite.getHeight()
     bullets = []
     bugBullets = []
     
@@ -85,7 +91,13 @@ def runGame():
     while True:
         checkForQuit()
         DISPLAYSURF.fill(BGCOLOR)
-        DISPLAYSURF.blit(pygame.transform.scale(ship.images[0], (shipWidth,shipHeight)), (ship_x, WINDOWHEIGHT - (shipHeight + 1)))
+        if len(ships) > 0:
+            ships[0]['x'] = ship_x
+            ships[0]['rect'] = pygame.Rect((ships[0]['x'],
+                                ships[0]['y'],
+                                shipWidth,
+                                shipHeight))
+            DISPLAYSURF.blit(ships[0]['surface'],ships[0]['rect'])
         for bugRow in bugs:
             for bug in bugRow:
                 bug['rect'] = pygame.Rect((bug['x'],
@@ -111,7 +123,7 @@ def runGame():
                     shipMoveLeft = False
                 # space bar
                 if event.key == K_SPACE and bullets == []:
-                    bullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
+                    bullets.append({'surface':pygame.transform.scale(bulletSprite.images[0], (bulletWidth,bulletHeight)),
                             'x': ship_x + 22,
                             'y': WINDOWHEIGHT - (shipHeight + 1)})
             # releasing left and right keys
@@ -168,6 +180,7 @@ def runGame():
                 
         # move bug bullets
         if bugBullets != []:
+            shipHit = False
             for bullet in bugBullets[:]:
                 bullet['rect'] = pygame.Rect((bullet['x'],
                                 bullet['y'],
@@ -177,12 +190,13 @@ def runGame():
                 if bullet['y'] > WINDOWHEIGHT:
                     bugBullets.remove(bullet)
                 else: # collision detection
-                    # if bullet['rect'].colliderect(ship['rect']):
-                        # bullets.remove(bullet)
-                        # bugs[bugsRow].remove(bug)
-                        # if bugs[bugsRow] == []:
-                            # del bugs[bugsRow]
-                        # bugHit = True # break after hitting first bug
+                    if not shipHit and bullet['rect'].colliderect(ships[0]['rect']):
+                        bugBullets.remove(bullet)
+                        del ships[0]
+                        ship_x = 0
+                        shipHit = True
+                        if ships == []:
+                            return
                     for block in blocks[:]:
                         if bullet['rect'].colliderect(block['rect']):
                             bugBullets.remove(bullet)
@@ -243,7 +257,7 @@ def runGame():
                         fireBugs_X.append(bug['x'])
             for bug in fireBugs:
                 if random.random() < BUGFIRECHANCE:
-                    bugBullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
+                    bugBullets.append({'surface':pygame.transform.scale(bulletSprite.images[0], (bulletWidth,bulletHeight)),
                             'x': bug['x'] + (bugWidth / 2) - 4,
                             'y': bug['y'] + bugHeight})
         
