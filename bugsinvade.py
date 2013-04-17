@@ -13,12 +13,15 @@ BUGMOVEH        = 20
 BUGMOVEV        = 20
 BUGSPACE        = 80
 BUGROWHEIGHT    = 50
+BUGBOUNDARY     = WINDOWHEIGHT - 100
 BLOCKSPACE      = 200
 FACTOR          = 3
-MOVESIDEWAYSFREQ= .75
 MOVERATE        = 9
-BULLETSPEED     = 30        
+BULLETSPEED     = 9
 BGCOLOR         = (0, 0, 0)
+TEXTSHADOWCOLOR = (185,185,185)
+TEXTCOLOR       = (255,255,255)
+
 
 def main():
     global DISPLAYSURF, FPSCLOCK
@@ -31,6 +34,8 @@ def main():
 
     while True:
         runGame()
+        showGameOverScreen()
+
         
 def runGame():
     ship = SpriteStripAnim('invader.png', (204,154,18,10), 1, 1)
@@ -47,7 +52,7 @@ def runGame():
     bugWidth = bugSprite.getWidth() * FACTOR
     bugHeight = bugSprite.getHeight() * FACTOR
     bugs = []
-    for bugRow in range(3):
+    for bugRow in range(5):
         bugs.append([])
         for bug in range(6):
             bugs[bugRow].append({'surface': pygame.transform.scale(bugSprite.images[0], (bugWidth,bugHeight)),
@@ -67,8 +72,11 @@ def runGame():
                        'image':0})
                        
     # set initial timers and movement directions
-    lastMoveSideways = time.time()    
+    lastMoveSideways = time.time()
+    roundTimer = time.time()
+    bugMoveFreq = .75
     bugMoveRight = True
+    bugMoveDown = False
     shipMoveLeft = False
     shipMoveRight = False
     
@@ -87,7 +95,7 @@ def runGame():
             DISPLAYSURF.blit(block['surface'], block['rect'])
             
         pygame.display.flip()
-        
+                
         # event handler
         for event in pygame.event.get():
             # keyboard handler
@@ -156,8 +164,13 @@ def runGame():
                     if bullets != []:
                         bullet['y'] -= BULLETSPEED
                 
+        # check roundTimer
+        if time.time() - roundTimer > 10 and bugMoveFreq > .15:
+            bugMoveFreq -= .15
+            roundTimer = time.time()
+            
         # move bugs
-        if (time.time() - lastMoveSideways) > MOVESIDEWAYSFREQ and bugs != []:
+        if (time.time() - lastMoveSideways) > bugMoveFreq and bugs != []:
             if len(bugs[0]) > 0 or len(bugs[1]) > 0 or len(bugs[2]) > 0:
                 # set bug direction
                 max_X = 0
@@ -167,10 +180,16 @@ def runGame():
                     min_X = min(bugs[bugRow][0]['x'], min_X)
                 if max_X + BUGMOVEH > WINDOWWIDTH - bugWidth:
                     bugMoveRight = False
+                    bugMoveDown = True
                 elif min_X - BUGMOVEH < 0:
                     bugMoveRight = True
+                    bugMoveDown = True
             for bugsRow in bugs:
                 for bug in bugsRow:
+                    if bugMoveDown:
+                        bug['y'] += BUGMOVEV
+                        if bug['y'] > BUGBOUNDARY:
+                            return
                     if bugMoveRight:
                         bug['x'] += BUGMOVEH
                     else:
@@ -181,12 +200,45 @@ def runGame():
                     else:
                         bug['image'] = 0
                     bug['surface'] = pygame.transform.scale(bugSprite.images[bug['image']], (bugWidth,bugHeight))
+            if bugMoveDown:
+                bugMoveDown = False
             lastMoveSideways = time.time()
         
         pygame.display.update()
         FPSCLOCK.tick(FPS)
 
         
+def showGameOverScreen():
+    titleSurf = pygame.font.Font('freesansbold.ttf', 100).render('Game Over', True, TEXTSHADOWCOLOR)
+    titleRect = titleSurf.get_rect()
+    titleRect.center = (int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2))
+    DISPLAYSURF.blit(titleSurf, titleRect)
+    
+    titleSurf = pygame.font.Font('freesansbold.ttf', 100).render('Game Over', True, TEXTCOLOR)
+    titleRect = titleSurf.get_rect()
+    titleRect.center = (int(WINDOWWIDTH / 2) - 3, int(WINDOWHEIGHT / 2) - 3)
+    DISPLAYSURF.blit(titleSurf, titleRect)
+    
+    pressKeySurf = pygame.font.Font('freesansbold.ttf', 18).render('Press a key to play.', True, TEXTCOLOR)
+    pressKeyRect = pressKeySurf.get_rect()
+    pressKeyRect.center = (int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2) + 100)
+    DISPLAYSURF.blit(pressKeySurf, pressKeyRect)
+    
+    while checkForKeyPress() == None:
+        pygame.display.update()
+        FPSCLOCK.tick()
+
+        
+def checkForKeyPress():
+    checkForQuit()
+    
+    for event in pygame.event.get([KEYDOWN, KEYUP, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION]):
+        if event.type in (KEYDOWN, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEMOTION):
+            continue
+        return event.key
+    return None
+    
+    
 def checkForQuit():
     for event in pygame.event.get(QUIT):
         pygame.quit()
