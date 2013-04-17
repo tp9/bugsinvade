@@ -14,6 +14,7 @@ BUGMOVEV        = 20
 BUGSPACE        = 80
 BUGROWHEIGHT    = 50
 BUGBOUNDARY     = WINDOWHEIGHT - 100
+BUGFIRECHANCE   = .04
 BLOCKSPACE      = 200
 FACTOR          = 3
 MOVERATE        = 9
@@ -46,6 +47,7 @@ def runGame():
     bulletHeight = bulletImg.getHeight()
     ship_x = 0
     bullets = []
+    bugBullets = []
     
     # make bugs
     bugSprite = SpriteStripAnim('img\invader.png', (0, 144, 18, 10), 2, 1, True, 23)
@@ -129,7 +131,7 @@ def runGame():
         elif shipMoveRight:
             ship_x += MOVERATE
             
-        # move bullets
+        # move ship bullets
         if bullets != []:
             for bullet in bullets[:]:
                 bullet['rect'] = pygame.Rect((bullet['x'],
@@ -164,6 +166,34 @@ def runGame():
                     if bullets != []:
                         bullet['y'] -= BULLETSPEED
                 
+        # move bug bullets
+        if bugBullets != []:
+            for bullet in bugBullets[:]:
+                bullet['rect'] = pygame.Rect((bullet['x'],
+                                bullet['y'],
+                                bulletWidth,
+                                bulletHeight))
+                DISPLAYSURF.blit(bullet['surface'], bullet['rect'])
+                if bullet['y'] > WINDOWHEIGHT:
+                    bugBullets.remove(bullet)
+                else: # collision detection
+                    # if bullet['rect'].colliderect(ship['rect']):
+                        # bullets.remove(bullet)
+                        # bugs[bugsRow].remove(bug)
+                        # if bugs[bugsRow] == []:
+                            # del bugs[bugsRow]
+                        # bugHit = True # break after hitting first bug
+                    for block in blocks[:]:
+                        if bullet['rect'].colliderect(block['rect']):
+                            bugBullets.remove(bullet)
+                            if block['image'] < 4:
+                                block['image'] += 1
+                                block['surface'] = pygame.transform.scale(blockSprite.images[block['image']], (blockWidth,blockHeight))
+                            elif block['image'] == 4:
+                                blocks.remove(block)
+                    if bugBullets != []:
+                        bullet['y'] += BULLETSPEED
+                        
         # check roundTimer
         if time.time() - roundTimer > 10 and bugMoveFreq > .15:
             bugMoveFreq -= .15
@@ -203,6 +233,19 @@ def runGame():
             if bugMoveDown:
                 bugMoveDown = False
             lastMoveSideways = time.time()
+            # bugs randomly fire
+            fireBugs = []
+            fireBugs_X = []
+            for bugRow in range(len(bugs)-1, -1, -1):
+                for bug in bugs[bugRow]:
+                    if bug['x'] not in fireBugs_X:
+                        fireBugs.append(bug)
+                        fireBugs_X.append(bug['x'])
+            for bug in fireBugs:
+                if random.random() < BUGFIRECHANCE:
+                    bugBullets.append({'surface':pygame.transform.scale(bulletImg.images[0], (bulletWidth,bulletHeight)),
+                            'x': bug['x'] + (bugWidth / 2) - 4,
+                            'y': bug['y'] + bugHeight})
         
         pygame.display.update()
         FPSCLOCK.tick(FPS)
