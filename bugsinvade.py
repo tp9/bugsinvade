@@ -14,7 +14,7 @@ BUGMOVEV        = 20
 BUGSPACE        = 80
 BUGROWHEIGHT    = 50
 BUGBOUNDARY     = WINDOWHEIGHT - 100
-BUGFIRECHANCE   = .07
+BUGFIRECHANCE   = .10
 BLOCKSPACE      = 200
 FACTOR          = 3
 MOVERATE        = 9
@@ -175,6 +175,8 @@ def runGame():
                                 block['surface'] = pygame.transform.scale(blockSprite.images[block['image']], (blockWidth,blockHeight))
                             elif block['image'] == 4:
                                 blocks.remove(block)
+                    if bugs == []:
+                        return
                     if bullets != []:
                         bullet['y'] -= BULLETSPEED
                 
